@@ -111,6 +111,9 @@ Future getPaletteFromUrl(String url, [int colorCount, int quality]) async {
 /// `quality` - Between 1 and 10. There is a trade-off between quality and speed. The bigger the number, the faster the palette generation but the greater the likelihood that colors will be missed.
 Future getColorFromImage(Image image, [int quality = 10]) async {
   final palette = await getPaletteFromImage(image, 5, quality);
+  if (palette == null) {
+    return null;
+  }
   final dominantColor = palette[0];
   return dominantColor;
 }
