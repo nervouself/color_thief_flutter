@@ -1,6 +1,6 @@
 name: color_thief_flutter
 description: Grab the color palette from an image, the Flutter implementation of color-thief.
-version: 1.0.0
+version: 1.0.1
 author: ShiLei<nervouself@qq.com>
 homepage: https://github.com/nervouself/color_thief_flutter
 
