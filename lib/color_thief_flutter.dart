@@ -68,6 +68,21 @@ Future<Image> getImageFromUrl(String url) async {
   return image;
 }
 
+Future getPaletteFromBytes(Uint8List imageData, int width, int height, [int colorCount, int quality]) async {
+  final options = _validateOptions(colorCount, quality);
+  colorCount = options[0];
+  quality = options[1];
+  
+  final pixelCount = width * height;
+
+  final pixelArray = _createPixelArray(imageData, pixelCount, quality);
+
+  final cmap = quantize(pixelArray, colorCount);
+  final palette = cmap == null ? null : cmap.palette();
+
+  return palette;
+}
+
 /// returns a list that contains the reduced color palette, represented as [[R,G,B]]
 /// 
 /// `image` - Image
@@ -81,14 +96,7 @@ Future getPaletteFromImage(Image image, [int colorCount, int quality]) async {
     quality = options[1];
 
     final imageData  = await image.toByteData(format: ImageByteFormat.rawRgba).then((val) => Uint8List.view((val.buffer)));
-    final pixelCount = image.width * image.height;
-
-    final pixelArray = _createPixelArray(imageData, pixelCount, quality);
-
-    final cmap = quantize(pixelArray, colorCount);
-    final palette = cmap == null ? null : cmap.palette();
-
-    return palette;
+    return getPaletteFromBytes(imageData, image.width, image.height, colorCount, quality);
 }
 
 /// returns a list that contains the reduced color palette, represented as [[R,G,B]]
