@@ -1,5 +1,5 @@
-import 'package:color_thief_flutter/color_thief_flutter.dart';
-import 'package:color_thief_flutter/utils.dart';
+import '../lib/color_thief_flutter.dart';
+import '../lib/utils.dart';
 import 'package:flutter/painting.dart';
 
 void main() {

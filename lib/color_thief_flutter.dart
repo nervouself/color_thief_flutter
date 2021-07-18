@@ -6,7 +6,8 @@ import 'dart:ui';
 import 'package:flutter/painting.dart';
 import 'package:quantize_dart/quantize_dart.dart';
 
-_createPixelArray(Uint8List imgData, int pixelCount, int quality) {
+List<List<int>> _createPixelArray(
+    Uint8List imgData, int pixelCount, int quality) {
   final pixels = imgData;
   List<List<int>> pixelArray = [];
 
@@ -26,7 +27,7 @@ _createPixelArray(Uint8List imgData, int pixelCount, int quality) {
   return pixelArray;
 }
 
-_validateOptions(int colorCount, int quality) {
+List<int> _validateOptions(int? colorCount, int? quality) {
   if (colorCount == null || colorCount.runtimeType != int) {
     colorCount = 10;
   } else {
@@ -42,16 +43,18 @@ _validateOptions(int colorCount, int quality) {
 }
 
 /// returns the real Image of ImageProvider
-/// 
+///
 /// `imageProvider` - ImageProvider
 Future<Image> getImageFromProvider(ImageProvider imageProvider) async {
   final ImageStream stream = imageProvider.resolve(
     ImageConfiguration(devicePixelRatio: 1.0),
   );
   final Completer<Image> imageCompleter = Completer<Image>();
-  ImageStreamListener listener;
+  ImageStreamListener? listener;
   listener = ImageStreamListener((ImageInfo info, bool synchronousCall) {
-    stream.removeListener(listener);
+    if (listener != null) {
+      stream.removeListener(listener);
+    }
     imageCompleter.complete(info.image);
   });
   stream.addListener(listener);
@@ -60,7 +63,7 @@ Future<Image> getImageFromProvider(ImageProvider imageProvider) async {
 }
 
 /// returns the Image from url
-/// 
+///
 /// `url` - url to image
 Future<Image> getImageFromUrl(String url) async {
   final ImageProvider imageProvider = NetworkImage(url);
@@ -68,48 +71,63 @@ Future<Image> getImageFromUrl(String url) async {
   return image;
 }
 
-/// returns a list that contains the reduced color palette, represented as [[R,G,B]]
-/// 
-/// `image` - Image
-/// 
-/// `colorCount` - Between 2 and 256. The maximum number of colours allowed in the reduced palette
-/// 
-/// `quality` - Between 1 and 10. There is a trade-off between quality and speed. The bigger the number, the faster the palette generation but the greater the likelihood that colors will be missed.
-Future getPaletteFromImage(Image image, [int colorCount, int quality]) async {
-    final options = _validateOptions(colorCount, quality);
-    colorCount = options[0];
-    quality = options[1];
+Future<List<List<int>>?> getPaletteFromBytes(
+    Uint8List imageData, int width, int height,
+    [int? colorCount, int quality = 10]) async {
+  final options = _validateOptions(colorCount, quality);
+  colorCount = options[0];
+  quality = options[1];
 
-    final imageData  = await image.toByteData(format: ImageByteFormat.rawRgba).then((val) => Uint8List.view((val.buffer)));
-    final pixelCount = image.width * image.height;
+  final pixelCount = width * height;
 
-    final pixelArray = _createPixelArray(imageData, pixelCount, quality);
+  final pixelArray = _createPixelArray(imageData, pixelCount, quality);
 
-    final cmap = quantize(pixelArray, colorCount);
-    final palette = cmap == null ? null : cmap.palette();
+  final cmap = quantize(pixelArray, colorCount);
+  final palette = cmap?.palette();
 
-    return palette;
+  return palette;
 }
 
 /// returns a list that contains the reduced color palette, represented as [[R,G,B]]
-/// 
-/// `url` - url to image
-/// 
+///
+/// `image` - Image
+///
 /// `colorCount` - Between 2 and 256. The maximum number of colours allowed in the reduced palette
-/// 
+///
 /// `quality` - Between 1 and 10. There is a trade-off between quality and speed. The bigger the number, the faster the palette generation but the greater the likelihood that colors will be missed.
-Future getPaletteFromUrl(String url, [int colorCount, int quality]) async {
+Future<List<List<int>>?> getPaletteFromImage(Image image,
+    [int? colorCount, int quality = 10]) async {
+  final options = _validateOptions(colorCount, quality);
+  colorCount = options[0];
+  quality = options[1];
+
+  final imageData = await image
+      .toByteData(format: ImageByteFormat.rawRgba)
+      .then((val) => Uint8List.view((val!.buffer)));
+  return getPaletteFromBytes(
+      imageData, image.width, image.height, colorCount, quality);
+}
+
+/// returns a list that contains the reduced color palette, represented as [[R,G,B]]
+///
+/// `url` - url to image
+///
+/// `colorCount` - Between 2 and 256. The maximum number of colours allowed in the reduced palette
+///
+/// `quality` - Between 1 and 10. There is a trade-off between quality and speed. The bigger the number, the faster the palette generation but the greater the likelihood that colors will be missed.
+Future<List<List<int>>?> getPaletteFromUrl(String url,
+    [int? colorCount, int quality = 10]) async {
   final image = await getImageFromUrl(url);
   final palette = await getPaletteFromImage(image, colorCount, quality);
   return palette;
 }
 
 /// returns the base color from the largest cluster, represented as [R,G,B]
-/// 
+///
 /// `image` - Image
-/// 
+///
 /// `quality` - Between 1 and 10. There is a trade-off between quality and speed. The bigger the number, the faster the palette generation but the greater the likelihood that colors will be missed.
-Future getColorFromImage(Image image, [int quality = 10]) async {
+Future<List<int>?> getColorFromImage(Image image, [int quality = 10]) async {
   final palette = await getPaletteFromImage(image, 5, quality);
   if (palette == null) {
     return null;
@@ -119,11 +137,11 @@ Future getColorFromImage(Image image, [int quality = 10]) async {
 }
 
 /// returns the base color from the largest cluster, represented as [R,G,B]
-/// 
+///
 /// `url` - url to image
-/// 
+///
 /// `quality` - Between 1 and 10. There is a trade-off between quality and speed. The bigger the number, the faster the palette generation but the greater the likelihood that colors will be missed.
-Future getColorFromUrl(String url, [int quality]) async {
+Future<List<int>?> getColorFromUrl(String url, [int quality = 10]) async {
   final image = await getImageFromUrl(url);
   final dominantColor = await getColorFromImage(image, quality);
   return dominantColor;
