@@ -3,15 +3,20 @@ description: Grab the color palette from an image, the Flutter implementation of
 version: 1.0.2
 author: ShiLei<nervouself@qq.com>
 homepage: https://github.com/nervouself/color_thief_flutter
+publish_to: none
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.13.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  quantize_dart: ^1.0.3
+  quantize_dart:
+    git:
+      url: git://github.com/tudutu/quantize_dart.git
+      ref: e082204
+    # path: ../quantize_dart
 
 dev_dependencies:
   flutter_test:
